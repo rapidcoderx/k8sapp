@@ -1,0 +1,24 @@
+# nonk8s
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: my-app
+build:
+  artifacts:
+    - image: my-app
+      context: .
+      sync:
+        manual:
+          - src: "*.js"
+            dest: .
+      docker:
+        dockerfile: Dockerfile
+  local:
+    useBuildkit: false
+    useDockerCLI: false
+    push: false
+manifests:
+  rawYaml:
+    - k8s/*.yaml
+deploy:
+  kubectl: {}

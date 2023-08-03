@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kubernetes Utilities</title>
+    <!-- Load Bootstrap CSS from the local "public/css" folder -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        :root {
+            /* Light mode colors */
+            --primary-color: #007bff;
+            --background-color: #ffffff;
+            --text-color: #333333;
+            /* Dark mode colors */
+            --dark-primary-color: #00bfff;
+            --dark-background-color: #1a1a1a;
+            --dark-text-color: #ffffff;
+        }
+
+        /* Default to light mode */
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        /* Apply dark mode styles when the class "dark-mode" is added to the body */
+        body.dark-mode {
+            background-color: var(--dark-background-color);
+            color: var(--dark-text-color);
+        }
+
+        /* Dark mode styles for the modal container */
+        .dark-mode .modal-content {
+            background-color: var(--dark-background-color);
+            color: var(--dark-text-color);
+        }
+
+        /* Dark mode styles for the modal header */
+        .dark-mode .modal-header {
+            background-color: var(--dark-primary-color);
+            color: var(--dark-text-color);
+        }
+
+        /* Dark mode styles for the modal body */
+        .dark-mode .modal-body {
+            background-color: var(--dark-background-color);
+            color: var(--dark-text-color);
+        }
+
+        /* Dark mode styles for the modal footer */
+        .dark-mode .modal-footer {
+            background-color: var(--dark-background-color);
+            color: var(--dark-text-color);
+        }
+
+        .blue-icon {
+            background-color: #0d6efd;
+            color: white; /* Set the color of the icon itself */
+        }
+
+        .iconhov:hover {
+            background-color: #1a8cff;
+            color: white; /* Set the color of the icon itself */
+            animation: jiggleAnimation 0.5s ease-in-out;
+        }
+
+        /* Custom animation to jiggle the icon */
+        @keyframes jiggleAnimation {
+            0% {
+                transform: rotate(0deg);
+            }
+            25% {
+                transform: rotate(-10deg);
+            }
+            50% {
+                transform: rotate(10deg);
+            }
+            75% {
+                transform: rotate(-5deg);
+            }
+            100% {
+                transform: rotate(0deg);
+            }
+        }
+
+        /* Add a CSS class to style the events container */
+        .events-container {
+            max-height: 400px; /* Set a fixed height for the container */
+            overflow: hidden; /* Hide content that exceeds the height */
+            overflow-y: auto; /* Enable vertical scrolling when content overflows */
+            /* Add any additional styles as needed */
+        }
+    </style>
+</head>
+<script>
+    function toggleDarkMode() {
+        const body = document.body;
+        body.classList.toggle('dark-mode');
+    }
+</script>
+<body>
+<div class="container mt-5">
+
+    <h1 class="mb-4">Kubernetes Utilities</h1>
+
+    <div class="mb-4">
+        <!-- Dark Mode Toggle Button -->
+        <button class="btn btn-primary me-2 iconhov" id="darkModeButton" data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                title="Toggle Dark Mode" onclick="toggleDarkMode()">
+            <i class="fas fa-moon"></i>
+            <i class="fas fa-sun"></i>
+        </button>
+
+        <!-- Preference Capture Button -->
+        <button class="btn btn-primary me-2 iconhov" id="preferenceCaptureButton" data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                title="Open Preferences" onclick="openPreferenceModal()">
+            <i class="fas fa-cog"></i>
+        </button>
+
+        <!-- Refresh Page Button -->
+        <button class="btn btn-primary me-2 iconhov" id="refreshButton" data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                title="Refresh Page" onclick="refreshPage()">
+            <i class="fas fa-sync"></i>
+        </button>
+
+        <!-- Clear Button with Eraser Icon -->
+        <button class="btn btn-secondary blue-icon iconhov me-2 " data-bs-toggle="tooltip" data-bs-placement="top"
+                title="Clear Form" onclick="clearForm()">
+            <i class="fas fa-eraser"></i>
+        </button>
+    </div>
+
+
+    <!-- Collapsible form -->
+    <button class="btn btn-primary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#deploymentForm"
+            id="toggleDeploymentForm"
+            aria-expanded="false" aria-controls="deploymentForm">
+        Rollout Restart
+    </button>
+
+    <button class="btn btn-primary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#viewEventsForm"
+            id="viewEventsButton">
+        View Events
+    </button>
+
+    <div class="collapse" id="deploymentForm">
+
+        <!-- Namespace dropdown -->
+        <div class="mb-3">
+            <label for="namespace">Namespace:</label>
+            <select class="form-control" id="namespace" name="namespace">
+                <!-- The dropdown options will be populated dynamically using JavaScript -->
+            </select>
+        </div>
+
+        <!-- Deployment Name input field -->
+        <div class="mb-3">
+            <label for="deploymentName">Deployment Name:</label>
+            <select class="form-control" id="deploymentName" name="deploymentName">
+                <!-- The dropdown options will be populated dynamically using JavaScript -->
+            </select>
+        </div>
+
+        <!-- Username input field -->
+        <div class="mb-3">
+            <label for="username">Username:</label>
+            <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username">
+        </div>
+
+        <!-- Password input field -->
+        <div class="mb-3">
+            <label for="password">Password:</label>
+            <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password">
+        </div>
+        <!-- Restart Deployment button -->
+        <button type="button" class="btn btn-primary btn-block" id="restartButton">Restart Deployment</button>
+
+    </div>
+
+    <!-- View Events Form -->
+    <div class="collapse" id="viewEventsForm">
+        <div class="mb-3">
+            <label for="viewEventsNamespace">Namespace:</label>
+            <select class="form-control" id="viewEventsNamespace" name="viewEventsNamespace">
+                <!-- The dropdown options will be populated dynamically using JavaScript -->
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="viewEventsDeploymentName">Deployment Name:</label>
+            <select class="form-control" id="viewEventsDeploymentName" name="viewEventsDeploymentName">
+                <!-- The dropdown options will be populated dynamically using JavaScript -->
+            </select>
+        </div>
+
+        <button type="button" class="btn btn-primary btn-block" id="fetchEventsButton" onclick="fetchEvents()">
+            Fetch Events
+        </button>
+
+        <!-- Add the "events-container" class to the events container -->
+        <div class="events-container mt-3" id="eventsContainer"></div>
+    </div>
+
+    <!-- Add a Confirmation Modal Dialog -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmationModalLabel">Confirm Deployment Restart</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" id="closeRestartButton">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="modalBodyText">
+                    Are you sure you want to restart the deployment?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" id="cancelRestartButton">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" id="confirmRestartButton">Restart</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add a hidden modal box for preference capture -->
+    <div class="modal fade" id="preferenceModal" tabindex="-1" aria-labelledby="preferenceModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="preferenceModalLabel">Preferences</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                            onclick="hidePreferenceModal()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="namespaceInputPref" class="form-label">Namespace:</label>
+                            <input type="text" class="form-control" id="namespaceInputPref" name="namespace"
+                                   placeholder="Enter your namespace">
+                        </div>
+                        <div class="mb-3">
+                            <label for="deploymentInputPref" class="form-label">Deployment:</label>
+                            <input type="text" class="form-control" id="deploymentInputPref" name="deployment"
+                                   placeholder="Enter your deployment">
+                        </div>
+                        <div class="mb-3">
+                            <label for="userNameInputPref" class="form-label">Username:</label>
+                            <input type="text" class="form-control" id="userNameInputPref" name="username"
+                                   placeholder="Enter your Username">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal"
+                            onclick="hidePreferenceModal()">Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="savePreferences()">Save Preferences</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Toast for displaying notifications -->
+    <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-delay="3000">
+        <div class="toast-header bg-primary text-white">
+            <strong class="mr-auto">Notification</strong>
+            <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="toast-body" id="notificationText"></div>
+    </div>
+</div>
+
+<!-- Load jQuery and Popper.js from the local "public/js" folder -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+    // Function to refresh the page
+    function refreshPage() {
+        window.location.reload();
+    }
+
+    // Function to set user preferences in local storage
+    function setUserPreference(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    // Function to get user preferences from local storage
+    function getUserPreference(key) {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : null;
+    }
+
+    // JavaScript code to clear the form
+    function clearForm() {
+        const namespaceSelect = document.getElementById('namespace');
+        const deploymentNameSelect = document.getElementById('deploymentName');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+
+        // Clear the selected namespace and deployment name
+        namespaceSelect.value = '';
+        deploymentNameSelect.innerHTML = '<option value="" selected>Select a deployment</option>';
+        deploymentNameSelect.disabled = true;
+
+        // Clear the input fields for username and password
+        usernameInput.value = '';
+        passwordInput.value = '';
+
+        // Clear the "View Events Form"
+        clearViewEventsForm();
+    }
+
+    // Function to clear the "View Events Form"
+    function clearViewEventsForm() {
+        const viewEventsNamespaceSelect = document.getElementById('viewEventsNamespace');
+        const viewEventsDeploymentNameSelect = document.getElementById('viewEventsDeploymentName');
+        const eventsContainer = document.getElementById('eventsContainer');
+
+        // Clear the selected namespace and deployment name in the "View Events Form"
+        viewEventsNamespaceSelect.value = '';
+        viewEventsDeploymentNameSelect.innerHTML = '<option value="" selected>Select a namespace first</option>';
+        viewEventsDeploymentNameSelect.disabled = true;
+
+        // Clear the events displayed in the eventsContainer
+        eventsContainer.innerHTML = '';
+    }
+
+    // Function to set the dark mode preference in local storage
+    function setDarkModePreference(isDarkMode) {
+        localStorage.setItem('darkMode', isDarkMode);
+    }
+
+    // Function to get the dark mode preference from local storage
+    function getDarkModePreference() {
+        return JSON.parse(localStorage.getItem('darkMode'));
+    }
+
+    // Function to apply the dark mode preference on page load
+    function applyDarkModePreference() {
+        const body = document.body;
+        const isDarkMode = getDarkModePreference();
+
+        if (isDarkMode) {
+            body.classList.add('dark-mode');
+            updateDarkModeButtonIcon(true); // Set sun icon if dark mode is enabled
+        } else {
+            body.classList.remove('dark-mode');
+            updateDarkModeButtonIcon(false); // Set moon icon if dark mode is disabled
+        }
+    }
+
+    // Function to apply user preferences on page load
+    function applyUserPreferences() {
+        // Retrieve user preferences from local storage
+        const selectedNamespace = getUserPreference('selectedNamespace');
+        const selectedDeployment = getUserPreference('selectedDeployment');
+        const selectedUsername = getUserPreference('selectedUsername');
+        const selectedDarkMode = getUserPreference('selectedDarkMode');
+
+        // Update the UI with user preferences
+        if (selectedNamespace) {
+            document.getElementById('namespace').value = selectedNamespace;
+            document.getElementById('viewEventsNamespace').value = selectedNamespace;
+        }
+
+        if (selectedDeployment) {
+            document.getElementById('deploymentName').value = selectedDeployment;
+            document.getElementById('viewEventsDeploymentName').value = selectedDeployment;
+        }
+
+        if (selectedUsername) {
+            document.getElementById('username').value = selectedUsername;
+        }
+
+        // Apply dark mode preference on page load
+        if (selectedDarkMode) {
+            document.body.classList.add('dark-mode');
+            updateDarkModeButtonIcon(true);
+        }
+    }
+
+    function prefillPreferences() {
+        // Retrieve user preferences from local storage
+        const selectedNamespace = getUserPreference('selectedNamespace');
+        const selectedDeployment = getUserPreference('selectedDeployment');
+        const selectedUsername = getUserPreference('selectedUsername');
+
+        // Update the UI with user preferences
+        if (selectedNamespace) {
+            document.getElementById('namespaceInputPref').value = selectedNamespace;
+        }
+
+        if (selectedDeployment) {
+            document.getElementById('deploymentInputPref').value = selectedDeployment;
+        }
+
+        if (selectedUsername) {
+            document.getElementById('userNameInputPref').value = selectedUsername;
+        }
+
+    }
+
+    // Function to update the Dark Mode button icon
+    function updateDarkModeButtonIcon(isDarkMode) {
+        const darkModeButton = document.getElementById('darkModeButton');
+        if (isDarkMode) {
+            darkModeButton.innerHTML = '<i class="fas fa-sun"></i>';
+        } else {
+            darkModeButton.innerHTML = '<i class="fas fa-moon"></i>';
+        }
+    }
+
+    // Update the dark mode preference when the toggle button is clicked
+    function toggleDarkMode() {
+        const body = document.body;
+        const isDarkMode = body.classList.toggle('dark-mode');
+        setDarkModePreference(isDarkMode);
+        updateDarkModeButtonIcon(isDarkMode);
+        setUserPreference('selectedDarkMode', isDarkMode);
+
+    }
+
+    // Function to fetch events for the selected deployment
+    async function fetchEvents() {
+        const viewEventsNamespace = document.getElementById('viewEventsNamespace').value;
+        const viewEventsDeploymentName = document.getElementById('viewEventsDeploymentName').value;
+
+        try {
+            // Send a request to the server to fetch events
+            const response = await fetch(`/api/events/${viewEventsNamespace}/${viewEventsDeploymentName}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Error fetching events.');
+            }
+
+            const events = await response.json();
+
+            // Display the events in the UI (you can customize this based on your needs)
+            const eventsContainer = document.getElementById('eventsContainer');
+            eventsContainer.innerHTML = ''; // Clear existing events
+            events.forEach((event) => {
+                const eventElement = document.createElement('div');
+                eventElement.className = 'event';
+                eventElement.innerHTML = `<p><strong>Type:</strong> ${event.type}</p><p><strong>Message:</strong> ${event.message}</p>`;
+                eventsContainer.appendChild(eventElement);
+            });
+
+        } catch (error) {
+            console.error('Error fetching events:', error);
+            showToast('error', 'Error fetching events. Please check the selected namespace and deployment.');
+        }
+    }
+
+    // Function to populate namespaces in the viewEventsNamespace dropdown
+    async function populateViewEventsNamespaces() {
+        const viewEventsNamespaceSelect = document.getElementById('viewEventsNamespace');
+
+        try {
+            // Fetch namespaces from the server
+            const response = await fetch('/api/namespaces', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch namespaces.');
+            }
+
+            const namespaces = await response.json();
+
+            // Clear existing options
+            while (viewEventsNamespaceSelect.firstChild) {
+                viewEventsNamespaceSelect.removeChild(viewEventsNamespaceSelect.firstChild);
+            }
+
+            // Populate the dropdown with namespaces
+            namespaces.forEach((namespace) => {
+                const option = document.createElement('option');
+                option.value = namespace;
+                option.textContent = namespace;
+                viewEventsNamespaceSelect.appendChild(option);
+            });
+
+            viewEventsNamespaceSelect.disabled = false;
+            viewEventsNamespaceSelect.addEventListener('change', async () => {
+                await populateViewEventsDeploymentNames();
+            });
+
+            // Populate deployment names for the default namespace (if any)
+            await populateViewEventsDeploymentNames();
+        } catch (error) {
+            console.error('Error fetching namespaces:', error);
+            viewEventsNamespaceSelect.innerHTML = '<option value="" selected>Error fetching namespace names</option>';
+            viewEventsNamespaceSelect.disabled = true;
+        }
+    }
+
+    // Function to populate deployment names in the viewEventsDeploymentName dropdown
+    async function populateViewEventsDeploymentNames() {
+        const viewEventsDeploymentNameSelect = document.getElementById('viewEventsDeploymentName');
+        const viewEventsNamespace = document.getElementById('viewEventsNamespace').value;
+
+        try {
+            const response = await fetch(`/api/deployments/${viewEventsNamespace}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch deployment names.');
+            }
+
+            const deploymentNames = await response.json();
+
+            // Clear existing options
+            while (viewEventsDeploymentNameSelect.firstChild) {
+                viewEventsDeploymentNameSelect.removeChild(viewEventsDeploymentNameSelect.firstChild);
+            }
+
+            // Populate the input field with deployment names
+            deploymentNames.forEach((name) => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                viewEventsDeploymentNameSelect.appendChild(option);
+            });
+
+            viewEventsDeploymentNameSelect.disabled = false;
+        } catch (error) {
+            console.error('Error fetching deployment names:', error);
+            viewEventsDeploymentNameSelect.innerHTML = '<option value="" selected>Error fetching deployment names</option>';
+            viewEventsDeploymentNameSelect.disabled = true;
+        }
+    }
+
+    // Call the function to apply user preferences on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        applyDarkModePreference();
+        applyUserPreferences();
+    });
+
+    // Call the function to apply user preferences on page load
+    window.addEventListener('storage', () => {
+        applyDarkModePreference();
+        applyUserPreferences();
+    });
+
+    // JavaScript code to populate the namespace dropdown
+    document.addEventListener('DOMContentLoaded', async () => {
+
+        const deploymentNameSelect = document.getElementById("deploymentName");
+        const namespaceSelect = document.getElementById('namespace');
+
+        try {
+
+            // Fetch namespaces from the server
+            const response = await fetch('/api/namespaces', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch namespaces.');
+            }
+
+            const namespaces = await response.json();
+            // Populate the dropdown with namespaces
+            namespaces.forEach((namespace) => {
+                const option = document.createElement('option');
+                option.value = namespace;
+                option.textContent = namespace;
+                namespaceSelect.appendChild(option);
+            });
+
+            const namespace = namespaceSelect.value.trim();
+            console.log('Namespaces:', namespaces);
+            if (!namespace) {
+                deploymentNameSelect.innerHTML = '<option value="" selected>Select a namespace first</option>';
+                deploymentNameSelect.disabled = true;
+                return;
+            }
+            namespaceSelect.disabled = false;
+            // Trigger the change event when the namespace dropdown is changed
+            namespaceSelect.addEventListener('change', async () => {
+                await populateDeploymentNames();
+            });
+
+            // Populate deployment names for the default namespace (if any)
+            await populateDeploymentNames();
+
+        } catch (error) {
+            console.error('Error fetching namespaces:', error);
+            namespaceSelect.innerHTML = '<option value="" selected>Error fetching namespace names</option>';
+            namespaceSelect.disabled = true;
+        }
+    });
+
+    // Function to populate deployment names for the selected namespace
+    async function populateDeploymentNames() {
+        const deploymentNameInput = document.getElementById('deploymentName');
+        const namespace = document.getElementById('namespace').value;
+
+        try {
+            const response = await fetch(`/api/deployments/${namespace}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch deployment names.');
+            }
+
+            const deploymentNames = await response.json();
+            deploymentNameInput.innerHTML = '<option value="" selected>Select a deployment</option>';
+
+            // Clear existing options
+            while (deploymentNameInput.firstChild) {
+                deploymentNameInput.removeChild(deploymentNameInput.firstChild);
+            }
+
+            // Populate the input field with deployment names
+            deploymentNames.forEach((name) => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                deploymentNameInput.appendChild(option);
+            });
+
+            deploymentNameInput.disabled = false;
+
+        } catch (error) {
+            console.error('Error fetching deployment names:', error);
+            deploymentNameInput.innerHTML = '<option value="" selected>Error fetching deployment names</option>';
+            deploymentNameInput.disabled = true;
+        }
+    }
+
+    // Function to show the View Events form
+    function openViewEventsForm() {
+        // Reset the form fields before showing
+        document.getElementById('viewEventsNamespace').value = '';
+        document.getElementById('viewEventsDeploymentName').innerHTML = '<option value="" selected>Select a namespace first</option>';
+        document.getElementById('viewEventsDeploymentName').disabled = true;
+
+        // Show the View Events form using Bootstrap collapse
+        $('#viewEventsForm').collapse('show');
+
+        // Populate the namespaces dropdown for View Events form
+        populateViewEventsNamespaces();
+    }
+
+
+    // JavaScript code to show the confirmation dialog
+    document.getElementById('restartButton').addEventListener('click', () => {
+        $('#confirmationModal').modal('show');
+    });
+
+    document.getElementById('toggleDeploymentForm').addEventListener('click', () => {
+        applyUserPreferences();
+        $('#viewEventsForm').collapse('hide');
+    });
+
+    document.getElementById('viewEventsButton').addEventListener('click', () => {
+        // Hide the Rollout Restart form using Bootstrap collapse
+        $('#deploymentForm').collapse('hide');
+    });
+
+    // Event listener to close the confirmation modal when the "Cancel" button is clicked
+    document.getElementById('cancelRestartButton').addEventListener('click', () => {
+        $('#confirmationModal').modal('hide');
+    });
+
+    // Event listener to close the confirmation modal when the "Cancel" button is clicked
+    document.getElementById('closeRestartButton').addEventListener('click', () => {
+        $('#confirmationModal').modal('hide');
+    });
+
+    // Event listener for the "View Events" button click
+    document.getElementById('viewEventsButton').addEventListener('click', () => {
+        openViewEventsForm();
+    });
+
+    function openPreferenceModal() {
+        $('#preferenceModal').modal('show');
+        prefillPreferences();
+    }
+
+    function hidePreferenceModal() {
+        $('#preferenceModal').modal('hide');
+    }
+
+    // Function to handle the "Save Preferences" button click in the modal box
+    function savePreferences() {
+        const namespace = document.getElementById('namespaceInputPref').value;
+        const deployment = document.getElementById('deploymentInputPref').value;
+        const username = document.getElementById('userNameInputPref').value;
+
+        // Save the selected namespace and deployment as user preferences
+        setUserPreference('selectedNamespace', namespace);
+        setUserPreference('selectedDeployment', deployment);
+        setUserPreference('selectedUsername', username);
+
+        // Close the modal box after saving preferences
+        $('#preferenceModal').modal('hide');
+
+        // Handle preferences saved event here if needed
+        // For example, you can update the UI based on the saved preferences
+        // ...
+    }
+
+    // JavaScript code to handle the button click
+    document.getElementById('confirmRestartButton').addEventListener('click', async () => {
+        try {
+            const namespace = document.getElementById('namespace').value.trim();
+            const deploymentName = document.getElementById('deploymentName').value.trim()
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            // Check if the required fields are empty
+            if (!namespace || !deploymentName || !username || !password) {
+                showToast('error', 'Please fill in all the required fields.');
+                return;
+            }
+
+            // Save the selected namespace and deployment as user preferences
+            setUserPreference('selectedNamespace', namespace);
+            setUserPreference('selectedDeployment', deploymentName);
+            setUserPreference('selectedUsername', username);
+            setUserPreference('selectedDarkMode', getDarkModePreference());
+
+            // Send the data to the server for deployment restart
+            const response = await fetch(`/api/rollout-restart/${namespace}/${deploymentName}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Basic ' + btoa(`${username}:${password}`),
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Error restarting deployment.');
+            }
+
+            const result = await response.json();
+
+            $('#confirmationModal').modal('hide');
+            // Show success notification
+            showToast('success', 'Deployment restarted successfully.');
+        } catch (error) {
+            console.error('Error restarting deployment:', error);
+            // Show error notification
+            showToast('error', 'Error restarting deployment. Please check the input values.');
+        }
+    });
+
+    // JavaScript function to show the toast notification
+    function showToast(status, message) {
+        const toast = document.querySelector('.toast');
+        const notificationText = document.getElementById('notificationText');
+        const usernameText = document.getElementById('username');
+        const passwordText = document.getElementById('password');
+
+        const toastClasses = ['toast', 'show'];
+        const statusClass = status === 'success' ? 'bg-success' : 'bg-danger';
+
+        // Update the toast content and status
+        notificationText.textContent = message;
+        toast.className = toastClasses.join(' ');
+
+        // Add status class and show the toast
+        toast.classList.add(statusClass);
+        $(toast).toast('show');
+
+        // Reset the toast after 3 seconds
+        setTimeout(() => {
+            toast.className = 'toast';
+            notificationText.textContent = '';
+            usernameText.value = '';
+            passwordText.value = '';
+        }, 3000);
+    }
+</script>
+</body>
+</html>

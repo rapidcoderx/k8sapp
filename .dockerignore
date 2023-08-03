@@ -1,0 +1,14 @@
+node_modules
+npm-debug.log
+yarn-error.log
+.git
+.gitignore
+Dockerfile
+README.md
+package-lock.json
+pod.json
+*.yaml
+*.yml
+k8s
+.dockerignore
+.idea

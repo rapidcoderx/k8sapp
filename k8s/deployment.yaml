@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-deployment
+spec:
+  replicas: 1  # Adjust the number of replicas as needed
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      serviceAccountName: my-app-serviceaccount
+      containers:
+        - name: my-app-container
+          image: my-app:latest  # Replace with your Docker image name and tag
+          ports:
+            - containerPort: 3000
+          env:
+            - name: BASIC_AUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: my-credentials
+                  key: username
+            - name: BASIC_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: my-credentials
+                  key: password
+            - name: SKIP_NAMESPACES
+              value: "kube-system,kube-public,kube-node-lease,metrics-server,istio-system"

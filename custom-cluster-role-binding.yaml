@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: custom-cluster-role-binding
+subjects:
+  - kind: ServiceAccount
+    name: my-app-serviceaccount
+    namespace: default  # Adjust the namespace if your service account is in a different namespace
+roleRef:
+    kind: ClusterRole
+    name: custom-metrics-role
+    apiGroup: rbac.authorization.k8s.io
