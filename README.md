@@ -1,3 +1,3 @@
 ### Kubernetes Utilities
 
-Node JS app to interact with Kubernetes API.
+NodeJS app to interact with Kubernetes API.
